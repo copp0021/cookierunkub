@@ -349,6 +349,21 @@
     tbody tr:hover { background: #f8fafc; }
     tbody tr:last-child td { border-bottom: 0; }
 
+    /* CSS สำหรับสินค้าที่ขายแล้ว */
+    tr.row-sold {
+      background: linear-gradient(to right, #fef2f2, #ffffff) !important;
+    }
+    
+    tr.row-sold .display-name {
+      color: #dc2626 !important;
+      text-decoration: line-through;
+    }
+    
+    tr.row-sold .file-name {
+      color: #991b1b !important;
+      font-weight: bold;
+    }
+
     .preview-img {
       width: 96px;
       height: 96px;
@@ -432,8 +447,6 @@
       line-height: 1.4;
       margin-top: 8px;
     }
-
-
 
     .image-box {
       display: flex;
@@ -652,12 +665,12 @@
         <section class="panel">
           <div class="section-title">
             <h3>⚙️ ตั้งค่า GitHub</h3>
-            <span class="hint">ระบบจะจำ Username และ Repo ไว้ในเครื่อง</span>
+            <span class="hint">ระบบจะจำข้อมูลไว้ในเครื่อง</span>
           </div>
           <div class="config-box">
             <label>Username GitHub:<br> <input type="text" id="ghOwner" value="copp0021" placeholder="เช่น moppkhh"></label>
             <label>Repository Name:<br> <input type="text" id="ghRepo" value="cookierunkub" placeholder="ชื่อ Repository"></label>
-            <label>Token สำหรับเพิ่มไฟล์:<br> <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx"></label>
+            <label>Token (จำเป็นสำหรับ Private Repo / กัน Limit):<br> <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx"></label>
           </div>
         </section>
 
@@ -672,7 +685,7 @@
           </button>
         </div>
 
-        <div id="statusMsg" class="status-msg">สถานะ: พร้อมทำงาน...</div>
+        <div id="statusMsg" class="status-msg">สถานะ: พร้อมทำงาน... (กรุณากดดึงข้อมูล)</div>
 
         <section class="panel">
           <div class="section-title">
@@ -713,7 +726,6 @@
     </div>
   </div>
 
-
   <div id="imageLightbox" class="lightbox" onclick="handleLightboxBackdrop(event)">
     <div class="lightbox-card" role="dialog" aria-modal="true" aria-label="ดูรูปภาพเต็ม">
       <div class="lightbox-head">
@@ -740,17 +752,22 @@
   const uploadBtn = document.getElementById("uploadBtn");
   const ownerInput = document.getElementById("ghOwner");
   const repoInput = document.getElementById("ghRepo");
+  const tokenInput = document.getElementById("ghToken");
+  
   const imageLightbox = document.getElementById("imageLightbox");
   const lightboxImg = document.getElementById("lightboxImg");
   const lightboxTitle = document.getElementById("lightboxTitle");
   const lightboxDownloadBtn = document.getElementById("lightboxDownloadBtn");
   let currentPreviewImage = null;
 
-  // จำ Username และ Repo ไว้ในเครื่อง เพื่อเปิดใช้งานครั้งต่อไปได้สะดวกขึ้น
+  // จำ Username, Repo และ Token ไว้ในเครื่อง
   ownerInput.value = localStorage.getItem("ghOwner") || ownerInput.value;
   repoInput.value = localStorage.getItem("ghRepo") || repoInput.value;
+  tokenInput.value = localStorage.getItem("ghToken") || "";
+  
   ownerInput.addEventListener("input", () => localStorage.setItem("ghOwner", ownerInput.value.trim()));
   repoInput.addEventListener("input", () => localStorage.setItem("ghRepo", repoInput.value.trim()));
+  tokenInput.addEventListener("input", () => localStorage.setItem("ghToken", tokenInput.value.trim()));
 
   searchInput.addEventListener("input", renderTable);
   filterStatus.addEventListener("change", renderTable);
@@ -758,6 +775,7 @@
   async function loadFromGitHub() {
     const owner = document.getElementById("ghOwner").value.trim();
     const repo = document.getElementById("ghRepo").value.trim();
+    const token = document.getElementById("ghToken").value.trim();
 
     if (!owner || !repo) {
       alert("กรุณากรอก Username และ Repository ให้ครบถ้วน");
@@ -772,8 +790,14 @@
     pngMap.clear();
     benzFiles = [];
 
+    // เพิ่ม headers ส่ง Token ไปตอนดึงข้อมูลด้วย (แก้ปัญหาข้อมูลไม่แสดง)
+    const headers = {};
+    if (token) {
+        headers["Authorization"] = `token ${token}`;
+    }
+
     try {
-      const imgRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/img`);
+      const imgRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/img`, { headers });
       if (imgRes.ok) {
         const imgList = await imgRes.json();
         imgList.forEach(file => {
@@ -781,9 +805,11 @@
             pngMap.set(getBaseName(file.name), { fileName: file.name, url: file.download_url });
           }
         });
+      } else {
+        console.warn("ไม่พบโฟลเดอร์ img หรือไม่มีสิทธิ์เข้าถึง (หากเป็น Private Repo โปรดใส่ Token)");
       }
 
-      const idRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/id`);
+      const idRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/id`, { headers });
       if (idRes.ok) {
         const idList = await idRes.json();
         idList.forEach(file => {
@@ -800,6 +826,8 @@
             });
           }
         });
+      } else {
+        console.warn("ไม่พบโฟลเดอร์ id หรือไม่มีสิทธิ์เข้าถึง");
       }
 
       benzFiles.sort((a, b) => a.displayName.localeCompare(b.displayName, "th"));
@@ -809,7 +837,7 @@
 
     } catch (error) {
       console.error(error);
-      statusMsg.innerHTML = "❌ เกิดข้อผิดพลาดในการดึงข้อมูล (ตรวจสอบชื่อ Repo หรือโฟลเดอร์)";
+      statusMsg.innerHTML = "❌ เกิดข้อผิดพลาดในการดึงข้อมูล (ตรวจสอบชื่อ Repo, Token หรือโฟลเดอร์)";
       statusMsg.style.color = "#e74c3c";
     } finally {
       loadGitBtn.disabled = false;
@@ -926,6 +954,11 @@
 
     filtered.forEach(item => {
       const tr = document.createElement("tr");
+
+      // เพิ่ม Class CSS หากสถานะเป็น sold
+      if (item.status === "sold") {
+        tr.classList.add("row-sold");
+      }
 
       const imgCell = document.createElement("td");
       imgCell.setAttribute("data-label", "รูปภาพ");
@@ -1111,11 +1144,8 @@
   });
 
   window.onload = () => {
-    const owner = document.getElementById("ghOwner").value;
-    const repo = document.getElementById("ghRepo").value;
-    if (owner !== "YOUR_USERNAME_HERE" && repo !== "YOUR_REPO_NAME_HERE") {
-      loadFromGitHub();
-    }
+    // นำการโหลดอัตโนมัติออกชั่วคราว เพื่อให้ผู้ใช้กรอก Token ได้ก่อน 
+    // หรือถ้าเคยใส่ Token ไว้แล้ว ระบบจะดึงจาก localStorage มารอไว้ให้เลย
   }
 </script>
 </body>
