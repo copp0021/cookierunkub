@@ -1091,7 +1091,7 @@
 
       if (prefix === "P" && value) { addUnique(displayParts, value); tags.push({ className: "tag-P", text: "สินค้า: " + value }); return; }
       if (prefix === "T" && value) { addUnique(displayParts, value); tags.push({ className: "tag-T", text: "ประเภท: " + value }); return; }
-      if (prefix === "C" && value) { addUnique(displayParts, "C = เพชร " + value); tags.push({ className: "tag-C", text: "เพชร: " + value }); return; }
+      if (prefix === "C" && value) { addUnique(displayParts, "เพชร " + value); tags.push({ className: "tag-C", text: "เพชร: " + value }); return; }
       imageCode = part.trim();
       tags.push({ className: "tag-code", text: "รหัสรูป: " + part.trim() });
     });
