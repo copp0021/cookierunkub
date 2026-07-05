@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบแสดงสินค้า .benz จาก GitHub</title>
+  <title>ระบบจัดการสินค้า .benz บน GitHub</title>
 
   <style>
     body {
@@ -38,11 +38,25 @@
       border-left: 4px solid #3498db;
     }
 
+    .config-box label {
+      display: inline-block;
+      margin-bottom: 10px;
+      margin-right: 15px;
+      font-weight: bold;
+    }
+
     .config-box input {
       padding: 8px;
       border: 1px solid #ccc;
       border-radius: 4px;
-      margin-right: 10px;
+      width: 200px;
+      margin-top: 5px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
     }
 
     button {
@@ -53,16 +67,17 @@
       font-weight: bold;
       font-size: 15px;
       color: white;
-      background: #34495e;
       transition: 0.3s;
     }
 
-    button:hover {
-      background: #2c3e50;
-    }
+    .btn-load { background: #34495e; }
+    .btn-load:hover { background: #2c3e50; }
+    
+    .btn-upload { background: #e67e22; }
+    .btn-upload:hover { background: #d35400; }
 
     button:disabled {
-      background: #b2bec3;
+      background: #b2bec3 !important;
       cursor: not-allowed;
     }
 
@@ -79,11 +94,13 @@
       margin-bottom: 15px;
     }
 
-    input[type="text"], select {
+    input[type="text"].search-input, select {
       padding: 11px;
       border: 1px solid #ddd;
       border-radius: 6px;
       font-size: 15px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .summary {
@@ -118,9 +135,7 @@
       color: white;
     }
 
-    tr:hover {
-      background-color: #f7f7f7;
-    }
+    tr:hover { background-color: #f7f7f7; }
 
     .preview-img {
       width: 90px;
@@ -160,52 +175,22 @@
     .tag-C { background-color: #9b59b6; }
     .tag-code { background-color: #e67e22; }
 
-    .display-name {
-      font-weight: bold;
-      color: #2c3e50;
-      margin-bottom: 6px;
-    }
-
-    .file-name {
-      font-size: 12px;
-      color: #7f8c8d;
-      word-break: break-all;
-    }
-
-    .status-buttons {
-      display: flex;
-      gap: 6px;
-      margin-top: 8px;
-    }
-
-    .btn-status {
-      color: #333;
-      padding: 8px 10px;
-      font-size: 13px;
-      border-radius: 5px;
-      flex: 1;
-    }
-
+    .display-name { font-weight: bold; color: #2c3e50; margin-bottom: 6px; }
+    .file-name { font-size: 12px; color: #7f8c8d; word-break: break-all; }
+    
+    .status-buttons { display: flex; gap: 6px; margin-top: 8px; }
+    .btn-status { color: #333; padding: 8px 10px; font-size: 13px; border-radius: 5px; flex: 1; }
     .btn-available { background: #ddffdf; color: #006b12; }
     .btn-sold { background: #ffdddd; color: #a10000; }
     .active-available { outline: 3px solid #00a326; }
     .active-sold { outline: 3px solid #d00000; }
-
-    .warn {
-      color: #e74c3c;
-      font-weight: bold;
-      font-size: 13px;
-      margin-top: 5px;
-    }
+    .warn { color: #e74c3c; font-weight: bold; font-size: 13px; margin-top: 5px; }
 
     @media (max-width: 800px) {
       .search-row { grid-template-columns: 1fr; }
       table, thead, tbody, th, td, tr { display: block; }
       thead { display: none; }
-      tr {
-        background: #fff; margin-bottom: 14px;
-        border: 1px solid #ddd; border-radius: 8px; padding: 10px;
-      }
+      tr { background: #fff; margin-bottom: 14px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
       td { border: none; padding: 8px 0; }
     }
   </style>
@@ -214,18 +199,25 @@
 <body>
 
 <div class="container">
-  <h2>📦 ระบบแสดงสินค้าจาก GitHub</h2>
+  <h2>📦 ระบบจัดการสินค้าจาก GitHub</h2>
 
   <div class="config-box">
-    <strong>การเชื่อมต่อ GitHub:</strong><br><br>
-    <label>Username: <input type="text" id="ghOwner" value="YOUR_USERNAME_HERE"></label>
-    <label>Repository: <input type="text" id="ghRepo" value="YOUR_REPO_NAME_HERE"></label>
-    <button id="loadGitBtn" onclick="loadFromGitHub()">🔄 ดึงข้อมูลจาก GitHub</button>
+    <strong>ตั้งค่าการเชื่อมต่อ GitHub:</strong><br>
+    <label>Username:<br> <input type="text" id="ghOwner" value="YOUR_USERNAME_HERE"></label>
+    <label>Repository:<br> <input type="text" id="ghRepo" value="YOUR_REPO_NAME_HERE"></label>
+    <label>Token (ต้องมีหากจะอัปโหลด):<br> <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx"></label>
+    
+    <div class="btn-group">
+      <button class="btn-load" id="loadGitBtn" onclick="loadFromGitHub()">🔄 ดึงข้อมูลจาก GitHub</button>
+      
+      <input type="file" id="fileUploadInput" multiple accept=".png,.benz" style="display: none;" onchange="handleFileUpload(event)">
+      <button class="btn-upload" id="uploadBtn" onclick="document.getElementById('fileUploadInput').click()">📤 อัปโหลดไฟล์ .benz / .png</button>
+    </div>
     <div id="statusMsg" class="status-msg">พร้อมทำงาน...</div>
   </div>
 
   <div class="search-row">
-    <input type="text" id="searchInput" placeholder="ค้นหา เช่น ขนมปัง เป๋าตัง มีด LYNCZ7544 หรือ 191">
+    <input type="text" id="searchInput" class="search-input" placeholder="ค้นหา เช่น ขนมปัง เป๋าตัง มีด LYNCZ7544 หรือ 191">
     <select id="filterStatus">
       <option value="all">แสดงทั้งหมด</option>
       <option value="available">ยังไม่ขาย</option>
@@ -261,6 +253,7 @@
   const filterStatus = document.getElementById("filterStatus");
   const statusMsg = document.getElementById("statusMsg");
   const loadGitBtn = document.getElementById("loadGitBtn");
+  const uploadBtn = document.getElementById("uploadBtn");
 
   searchInput.addEventListener("input", renderTable);
   filterStatus.addEventListener("change", renderTable);
@@ -275,6 +268,7 @@
     }
 
     loadGitBtn.disabled = true;
+    uploadBtn.disabled = true;
     statusMsg.innerHTML = "กำลังดึงข้อมูลจาก GitHub...";
     statusMsg.style.color = "#e67e22";
     
@@ -282,22 +276,16 @@
     benzFiles = [];
 
     try {
-      // 1. ดึงรายการไฟล์จากโฟลเดอร์ img/
       const imgRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/img`);
       if (imgRes.ok) {
         const imgList = await imgRes.json();
         imgList.forEach(file => {
           if (file.type === "file" && getExtension(file.name) === "png") {
-            const code = getBaseName(file.name);
-            pngMap.set(code, {
-              fileName: file.name,
-              url: file.download_url // URL สำหรับแสดงภาพตรงๆ จาก GitHub
-            });
+            pngMap.set(getBaseName(file.name), { fileName: file.name, url: file.download_url });
           }
         });
       }
 
-      // 2. ดึงรายการไฟล์จากโฟลเดอร์ id/
       const idRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/id`);
       if (idRes.ok) {
         const idList = await idRes.json();
@@ -305,7 +293,6 @@
           if (file.type === "file" && getExtension(file.name) === "benz") {
             const nameWithoutExt = getBaseName(file.name);
             const parsed = parseBenzFileName(nameWithoutExt);
-
             benzFiles.push({
               fullName: file.name,
               nameWithoutExt: nameWithoutExt,
@@ -319,7 +306,6 @@
       }
 
       benzFiles.sort((a, b) => a.displayName.localeCompare(b.displayName, "th"));
-      
       statusMsg.innerHTML = "✅ ดึงข้อมูลสำเร็จ!";
       statusMsg.style.color = "#2ecc71";
       renderTable();
@@ -330,20 +316,110 @@
       statusMsg.style.color = "#e74c3c";
     } finally {
       loadGitBtn.disabled = false;
+      uploadBtn.disabled = false;
     }
   }
+
+  // --- ระบบอัปโหลดไฟล์ผ่าน API ---
+  async function handleFileUpload(event) {
+    const files = event.target.files;
+    if (files.length === 0) return;
+
+    const owner = document.getElementById("ghOwner").value.trim();
+    const repo = document.getElementById("ghRepo").value.trim();
+    const token = document.getElementById("ghToken").value.trim();
+
+    if (!token) {
+      alert("กรุณากรอก GitHub Token ในช่องการตั้งค่าก่อนทำการอัปโหลด!");
+      return;
+    }
+
+    loadGitBtn.disabled = true;
+    uploadBtn.disabled = true;
+    statusMsg.innerHTML = `⏳ กำลังอัปโหลด ${files.length} ไฟล์ ขึ้น GitHub...`;
+    statusMsg.style.color = "#e67e22";
+
+    let successCount = 0;
+
+    for (const file of files) {
+      const ext = getExtension(file.name);
+      let folder = "";
+      
+      if (ext === "png") folder = "img";
+      else if (ext === "benz") folder = "id";
+      else continue;
+
+      try {
+        const base64Content = await fileToBase64(file);
+        const path = `${folder}/${file.name}`;
+        await uploadToGitHubAPI(owner, repo, path, base64Content, token);
+        successCount++;
+      } catch (err) {
+        console.error(`Failed to upload ${file.name}:`, err);
+      }
+    }
+
+    document.getElementById('fileUploadInput').value = ""; // รีเซ็ต input
+
+    if (successCount === files.length) {
+      statusMsg.innerHTML = `✅ อัปโหลดสำเร็จ ${successCount} ไฟล์! กำลังรีเฟรชข้อมูล...`;
+      statusMsg.style.color = "#2ecc71";
+    } else {
+      statusMsg.innerHTML = `⚠️ อัปโหลดสำเร็จ ${successCount}/${files.length} ไฟล์ (อาจมีข้อผิดพลาดเรื่อง Token)`;
+      statusMsg.style.color = "#e74c3c";
+    }
+
+    await loadFromGitHub(); // โหลดข้อมูลใหม่หลังอัปโหลดเสร็จ
+  }
+
+  // แปลงไฟล์เป็น Base64 (เอาเฉพาะส่วนเนื้อหา ไม่เอา Header)
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = error => reject(error);
+    });
+  }
+
+  // ส่งข้อมูลไปที่ GitHub API
+  async function uploadToGitHubAPI(owner, repo, path, base64Content, token) {
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+    // 1. เช็คก่อนว่าไฟล์ชื่อนี้มีอยู่แล้วหรือไม่ (ถ้ามี ต้องเอา SHA มาด้วยเพื่อบันทึกทับ)
+    let sha = null;
+    const getRes = await fetch(url, { headers: { "Authorization": `token ${token}` } });
+    if (getRes.ok) {
+      const data = await getRes.json();
+      sha = data.sha;
+    }
+
+    // 2. ทำการอัปโหลดไฟล์ (สร้างใหม่ หรือ ทับของเดิม)
+    const body = {
+      message: `Upload ${path} via Admin Web`,
+      content: base64Content
+    };
+    if (sha) body.sha = sha;
+
+    const putRes = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Authorization": `token ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!putRes.ok) throw new Error("Upload failed");
+  }
+  // -----------------------------
 
   function renderTable() {
     const table = document.getElementById("resultTable");
     const tbody = document.getElementById("resultBody");
 
     tbody.innerHTML = "";
-
-    if (benzFiles.length === 0) {
-      table.style.display = "none";
-      updateSummary();
-      return;
-    }
+    if (benzFiles.length === 0) { table.style.display = "none"; updateSummary(); return; }
 
     table.style.display = "table";
     const search = searchInput.value.toLowerCase().trim();
@@ -359,7 +435,6 @@
     filtered.forEach(item => {
       const tr = document.createElement("tr");
 
-      // Column 1: Image
       const imgCell = document.createElement("td");
       if (item.imageCode && pngMap.has(item.imageCode)) {
         const img = document.createElement("img");
@@ -372,7 +447,6 @@
         noImg.className = "no-img";
         noImg.innerHTML = "ไม่มีภาพ";
         imgCell.appendChild(noImg);
-        
         const warn = document.createElement("div");
         warn.className = "warn";
         warn.textContent = item.imageCode ? `ขาด img/${item.imageCode}.png` : "ไม่พบรหัสรูป";
@@ -380,7 +454,6 @@
       }
       tr.appendChild(imgCell);
 
-      // Column 2: Info
       const infoCell = document.createElement("td");
       infoCell.innerHTML = `
         <div class="display-name">${escapeHtml(item.displayName)}</div>
@@ -389,7 +462,6 @@
       `;
       tr.appendChild(infoCell);
 
-      // Column 3: Tags
       const tagsCell = document.createElement("td");
       item.tags.forEach(tag => {
         const span = document.createElement("span");
@@ -399,7 +471,6 @@
       });
       tr.appendChild(tagsCell);
 
-      // Column 4: Status (Local Storage)
       const statusCell = document.createElement("td");
       statusCell.innerHTML = `
         <b>${item.status === "sold" ? "ขายแล้ว" : "ยังไม่ขาย"}</b>
@@ -408,7 +479,6 @@
           <button class="btn-status btn-sold ${item.status === "sold" ? "active-sold" : ""}">ขายแล้ว</button>
         </div>
       `;
-      
       const btnAvailable = statusCell.querySelector(".btn-available");
       const btnSold = statusCell.querySelector(".btn-sold");
 
@@ -418,7 +488,6 @@
       tr.appendChild(statusCell);
       tbody.appendChild(tr);
     });
-
     updateSummary();
   }
 
@@ -448,42 +517,20 @@
       const prefix = part.charAt(0);
       const value = part.substring(1).trim();
 
-      if (prefix === "P" && value) {
-        addUnique(displayParts, value);
-        tags.push({ className: "tag-P", text: "สินค้า: " + value });
-        return;
-      }
-      if (prefix === "T" && value) {
-        addUnique(displayParts, value);
-        tags.push({ className: "tag-T", text: "ประเภท: " + value });
-        return;
-      }
-      if (prefix === "C" && value) {
-        addUnique(displayParts, "C = เพชร " + value);
-        tags.push({ className: "tag-C", text: "เพชร: " + value });
-        return;
-      }
+      if (prefix === "P" && value) { addUnique(displayParts, value); tags.push({ className: "tag-P", text: "สินค้า: " + value }); return; }
+      if (prefix === "T" && value) { addUnique(displayParts, value); tags.push({ className: "tag-T", text: "ประเภท: " + value }); return; }
+      if (prefix === "C" && value) { addUnique(displayParts, "C = เพชร " + value); tags.push({ className: "tag-C", text: "เพชร: " + value }); return; }
       imageCode = part.trim();
       tags.push({ className: "tag-code", text: "รหัสรูป: " + part.trim() });
     });
-
-    return {
-      imageCode: imageCode,
-      displayName: displayParts.length > 0 ? displayParts.join(" + ") : nameWithoutExt,
-      tags: tags
-    };
+    return { imageCode: imageCode, displayName: displayParts.length > 0 ? displayParts.join(" + ") : nameWithoutExt, tags: tags };
   }
 
-  function addUnique(array, value) {
-    if (!array.includes(value)) array.push(value);
-  }
+  function addUnique(array, value) { if (!array.includes(value)) array.push(value); }
   function getExtension(filename) { return filename.split(".").pop().toLowerCase(); }
   function getBaseName(filename) { return filename.replace(/\.[^/.]+$/, ""); }
-  function escapeHtml(text) {
-    return String(text).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
-  }
+  function escapeHtml(text) { return String(text).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
   
-  // โหลดข้อมูลอัตโนมัติหากมีการตั้งค่าไว้แล้ว
   window.onload = () => {
     const owner = document.getElementById("ghOwner").value;
     const repo = document.getElementById("ghRepo").value;
