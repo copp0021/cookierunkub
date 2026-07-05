@@ -30,37 +30,12 @@
       margin-top: 0;
     }
 
-    .config-box {
-      background: #eef2f7;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      border-left: 4px solid #3498db;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      align-items: center;
-    }
-
-    .config-box label {
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    .config-box input {
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      width: 220px;
-      margin-top: 5px;
-      display: block;
-    }
-
     .top-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
       margin-bottom: 16px;
+      margin-top: 20px;
     }
 
     button {
@@ -211,12 +186,6 @@
 <div class="container">
   <h2>📦 ระบบจัดการสินค้าจาก GitHub</h2>
 
-  <div class="config-box">
-    <label>Username GitHub:<br> <input type="text" id="ghOwner" value="YOUR_USERNAME_HERE"></label>
-    <label>Repository Name:<br> <input type="text" id="ghRepo" value="YOUR_REPO_NAME_HERE"></label>
-    <label>Token (ต้องมีเมื่อจะเพิ่มไฟล์):<br> <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx"></label>
-  </div>
-
   <div class="top-actions">
     <button class="btn-load" id="loadGitBtn" onclick="loadFromGitHub()">
       🔄 1. ดึงข้อมูลจาก GitHub
@@ -260,6 +229,14 @@
 </div>
 
 <script>
+  // ==========================================
+  // ⚙️ ตั้งค่า GitHub ของคุณที่นี่ (Hardcode)
+  // ==========================================
+  const GITHUB_OWNER = "copp0021"; // เปลี่ยนเป็น Username ของคุณ เช่น "somchai"
+  const GITHUB_REPO = "cookierunkub"; // เปลี่ยนเป็นชื่อ Repo ของคุณ เช่น "my-benz-shop"
+  const GITHUB_TOKEN = "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"; // เปลี่ยนเป็น Token ของคุณ
+  // ==========================================
+
   const pngMap = new Map();
   let benzFiles = [];
 
@@ -273,11 +250,8 @@
   filterStatus.addEventListener("change", renderTable);
 
   async function loadFromGitHub() {
-    const owner = document.getElementById("ghOwner").value.trim();
-    const repo = document.getElementById("ghRepo").value.trim();
-
-    if (!owner || !repo) {
-      alert("กรุณากรอก Username และ Repository ให้ครบถ้วน");
+    if (GITHUB_OWNER === "YOUR_USERNAME_HERE" || GITHUB_REPO === "YOUR_REPO_NAME_HERE") {
+      alert("กรุณาเข้าไปแก้รหัส GITHUB_OWNER และ GITHUB_REPO ในโค้ดก่อนครับ!");
       return;
     }
 
@@ -289,8 +263,13 @@
     pngMap.clear();
     benzFiles = [];
 
+    // เพิ่ม headers Authorization เพื่อให้อ่าน Repo แบบ Private ได้ (ถ้ามี)
+    const headers = GITHUB_TOKEN && GITHUB_TOKEN.startsWith("ghp_") 
+      ? { "Authorization": `token ${GITHUB_TOKEN}` } 
+      : {};
+
     try {
-      const imgRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/img`);
+      const imgRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/img`, { headers });
       if (imgRes.ok) {
         const imgList = await imgRes.json();
         imgList.forEach(file => {
@@ -300,7 +279,7 @@
         });
       }
 
-      const idRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/id`);
+      const idRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/id`, { headers });
       if (idRes.ok) {
         const idList = await idRes.json();
         idList.forEach(file => {
@@ -326,7 +305,7 @@
 
     } catch (error) {
       console.error(error);
-      statusMsg.innerHTML = "❌ เกิดข้อผิดพลาดในการดึงข้อมูล (ตรวจสอบชื่อ Repo หรือโฟลเดอร์)";
+      statusMsg.innerHTML = "❌ เกิดข้อผิดพลาดในการดึงข้อมูล (ตรวจสอบการตั้งค่า Owner/Repo/Token ในโค้ด)";
       statusMsg.style.color = "#e74c3c";
     } finally {
       loadGitBtn.disabled = false;
@@ -339,12 +318,8 @@
     const files = event.target.files;
     if (files.length === 0) return;
 
-    const owner = document.getElementById("ghOwner").value.trim();
-    const repo = document.getElementById("ghRepo").value.trim();
-    const token = document.getElementById("ghToken").value.trim();
-
-    if (!token) {
-      alert("กรุณากรอก GitHub Token ในช่องการตั้งค่าก่อนทำการเพิ่มไฟล์!");
+    if (!GITHUB_TOKEN || !GITHUB_TOKEN.startsWith("ghp_")) {
+      alert("กรุณาตั้งค่า GITHUB_TOKEN ในโค้ดให้ถูกต้องก่อนทำการเพิ่มไฟล์!");
       document.getElementById('fileUploadInput').value = "";
       return;
     }
@@ -366,8 +341,10 @@
 
       try {
         const base64Content = await fileToBase64(file);
-        const path = `${folder}/${file.name}`;
-        await uploadToGitHubAPI(owner, repo, path, base64Content, token);
+        // Encode ชื่อไฟล์ด้วย encodeURIComponent เผื่อกรณีไฟล์ภาษาไทย
+        const safeFileName = encodeURIComponent(file.name); 
+        const path = `${folder}/${safeFileName}`;
+        await uploadToGitHubAPI(path, base64Content);
         successCount++;
       } catch (err) {
         console.error(`Failed to upload ${file.name}:`, err);
@@ -380,7 +357,7 @@
       statusMsg.innerHTML = `✅ เพิ่มไฟล์สำเร็จ ${successCount} ไฟล์! กำลังรีเฟรชข้อมูล...`;
       statusMsg.style.color = "#2ecc71";
     } else {
-      statusMsg.innerHTML = `⚠️ เพิ่มไฟล์สำเร็จ ${successCount}/${files.length} ไฟล์ (ตรวจสอบ Token หรือเน็ตของคุณ)`;
+      statusMsg.innerHTML = `⚠️ เพิ่มไฟล์สำเร็จ ${successCount}/${files.length} ไฟล์ (เช็ค Console Log หรือ Token)`;
       statusMsg.style.color = "#e74c3c";
     }
 
@@ -396,17 +373,19 @@
     });
   }
 
-  async function uploadToGitHubAPI(owner, repo, path, base64Content, token) {
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+  async function uploadToGitHubAPI(path, base64Content) {
+    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
     let sha = null;
-    const getRes = await fetch(url, { headers: { "Authorization": `token ${token}` } });
+    
+    // ดึงค่า SHA เดิมมาก่อน (เผื่อไฟล์มีอยู่แล้วและต้องการเขียนทับ)
+    const getRes = await fetch(url, { headers: { "Authorization": `token ${GITHUB_TOKEN}` } });
     if (getRes.ok) {
       const data = await getRes.json();
       sha = data.sha;
     }
 
     const body = {
-      message: `Add ${path} via Admin Web`,
+      message: `Add/Update file via Admin Web`,
       content: base64Content
     };
     if (sha) body.sha = sha;
@@ -414,7 +393,7 @@
     const putRes = await fetch(url, {
       method: "PUT",
       headers: {
-        "Authorization": `token ${token}`,
+        "Authorization": `token ${GITHUB_TOKEN}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify(body)
@@ -540,10 +519,9 @@
   function getBaseName(filename) { return filename.replace(/\.[^/.]+$/, ""); }
   function escapeHtml(text) { return String(text).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
   
+  // ให้โหลดอัตโนมัติเมื่อเปิดเว็บ (ถ้าใส่ข้อมูลแล้ว)
   window.onload = () => {
-    const owner = document.getElementById("ghOwner").value;
-    const repo = document.getElementById("ghRepo").value;
-    if (owner !== "YOUR_USERNAME_HERE" && repo !== "YOUR_REPO_NAME_HERE") {
+    if (GITHUB_OWNER !== "YOUR_USERNAME_HERE" && GITHUB_REPO !== "YOUR_REPO_NAME_HERE") {
       loadFromGitHub();
     }
   }
