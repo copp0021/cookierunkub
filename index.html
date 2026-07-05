@@ -36,38 +36,43 @@
       border-radius: 8px;
       margin-bottom: 20px;
       border-left: 4px solid #3498db;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
     }
 
     .config-box label {
-      display: inline-block;
-      margin-bottom: 10px;
-      margin-right: 15px;
       font-weight: bold;
+      font-size: 14px;
     }
 
     .config-box input {
       padding: 8px;
       border: 1px solid #ccc;
       border-radius: 4px;
-      width: 200px;
+      width: 220px;
       margin-top: 5px;
+      display: block;
     }
 
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
+    .top-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
     button {
       border: none;
-      padding: 10px 16px;
+      padding: 14px 16px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
-      font-size: 15px;
+      font-size: 16px;
       color: white;
       transition: 0.3s;
+      text-align: center;
     }
 
     .btn-load { background: #34495e; }
@@ -82,9 +87,13 @@
     }
 
     .status-msg {
-      margin-top: 10px;
-      font-size: 14px;
+      margin-bottom: 15px;
+      font-size: 15px;
       font-weight: bold;
+      padding: 10px;
+      border-radius: 6px;
+      background: #fdfbfb;
+      border: 1px dashed #ddd;
     }
 
     .search-row {
@@ -187,6 +196,7 @@
     .warn { color: #e74c3c; font-weight: bold; font-size: 13px; margin-top: 5px; }
 
     @media (max-width: 800px) {
+      .top-actions { grid-template-columns: 1fr; }
       .search-row { grid-template-columns: 1fr; }
       table, thead, tbody, th, td, tr { display: block; }
       thead { display: none; }
@@ -202,19 +212,23 @@
   <h2>📦 ระบบจัดการสินค้าจาก GitHub</h2>
 
   <div class="config-box">
-    <strong>ตั้งค่าการเชื่อมต่อ GitHub:</strong><br>
-    <label>Username:<br> <input type="text" id="ghOwner" value="YOUR_USERNAME_HERE"></label>
-    <label>Repository:<br> <input type="text" id="ghRepo" value="YOUR_REPO_NAME_HERE"></label>
-    <label>Token (ต้องมีหากจะอัปโหลด):<br> <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx"></label>
-    
-    <div class="btn-group">
-      <button class="btn-load" id="loadGitBtn" onclick="loadFromGitHub()">🔄 ดึงข้อมูลจาก GitHub</button>
-      
-      <input type="file" id="fileUploadInput" multiple accept=".png,.benz" style="display: none;" onchange="handleFileUpload(event)">
-      <button class="btn-upload" id="uploadBtn" onclick="document.getElementById('fileUploadInput').click()">📤 อัปโหลดไฟล์ .benz / .png</button>
-    </div>
-    <div id="statusMsg" class="status-msg">พร้อมทำงาน...</div>
+    <label>Username GitHub:<br> <input type="text" id="ghOwner" value="YOUR_USERNAME_HERE"></label>
+    <label>Repository Name:<br> <input type="text" id="ghRepo" value="YOUR_REPO_NAME_HERE"></label>
+    <label>Token (ต้องมีเมื่อจะเพิ่มไฟล์):<br> <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx"></label>
   </div>
+
+  <div class="top-actions">
+    <button class="btn-load" id="loadGitBtn" onclick="loadFromGitHub()">
+      🔄 1. ดึงข้อมูลจาก GitHub
+    </button>
+    
+    <input type="file" id="fileUploadInput" multiple accept=".png,.benz" style="display: none;" onchange="handleFileUpload(event)">
+    <button class="btn-upload" id="uploadBtn" onclick="document.getElementById('fileUploadInput').click()">
+      ➕ 2. เพิ่มไฟล์ .benz / .png
+    </button>
+  </div>
+
+  <div id="statusMsg" class="status-msg">สถานะ: พร้อมทำงาน...</div>
 
   <div class="search-row">
     <input type="text" id="searchInput" class="search-input" placeholder="ค้นหา เช่น ขนมปัง เป๋าตัง มีด LYNCZ7544 หรือ 191">
@@ -320,7 +334,7 @@
     }
   }
 
-  // --- ระบบอัปโหลดไฟล์ผ่าน API ---
+  // ระบบอัปโหลดไฟล์
   async function handleFileUpload(event) {
     const files = event.target.files;
     if (files.length === 0) return;
@@ -330,7 +344,8 @@
     const token = document.getElementById("ghToken").value.trim();
 
     if (!token) {
-      alert("กรุณากรอก GitHub Token ในช่องการตั้งค่าก่อนทำการอัปโหลด!");
+      alert("กรุณากรอก GitHub Token ในช่องการตั้งค่าก่อนทำการเพิ่มไฟล์!");
+      document.getElementById('fileUploadInput').value = "";
       return;
     }
 
@@ -359,20 +374,19 @@
       }
     }
 
-    document.getElementById('fileUploadInput').value = ""; // รีเซ็ต input
+    document.getElementById('fileUploadInput').value = ""; 
 
     if (successCount === files.length) {
-      statusMsg.innerHTML = `✅ อัปโหลดสำเร็จ ${successCount} ไฟล์! กำลังรีเฟรชข้อมูล...`;
+      statusMsg.innerHTML = `✅ เพิ่มไฟล์สำเร็จ ${successCount} ไฟล์! กำลังรีเฟรชข้อมูล...`;
       statusMsg.style.color = "#2ecc71";
     } else {
-      statusMsg.innerHTML = `⚠️ อัปโหลดสำเร็จ ${successCount}/${files.length} ไฟล์ (อาจมีข้อผิดพลาดเรื่อง Token)`;
+      statusMsg.innerHTML = `⚠️ เพิ่มไฟล์สำเร็จ ${successCount}/${files.length} ไฟล์ (ตรวจสอบ Token หรือเน็ตของคุณ)`;
       statusMsg.style.color = "#e74c3c";
     }
 
-    await loadFromGitHub(); // โหลดข้อมูลใหม่หลังอัปโหลดเสร็จ
+    await loadFromGitHub(); 
   }
 
-  // แปลงไฟล์เป็น Base64 (เอาเฉพาะส่วนเนื้อหา ไม่เอา Header)
   function fileToBase64(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -382,11 +396,8 @@
     });
   }
 
-  // ส่งข้อมูลไปที่ GitHub API
   async function uploadToGitHubAPI(owner, repo, path, base64Content, token) {
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-
-    // 1. เช็คก่อนว่าไฟล์ชื่อนี้มีอยู่แล้วหรือไม่ (ถ้ามี ต้องเอา SHA มาด้วยเพื่อบันทึกทับ)
     let sha = null;
     const getRes = await fetch(url, { headers: { "Authorization": `token ${token}` } });
     if (getRes.ok) {
@@ -394,9 +405,8 @@
       sha = data.sha;
     }
 
-    // 2. ทำการอัปโหลดไฟล์ (สร้างใหม่ หรือ ทับของเดิม)
     const body = {
-      message: `Upload ${path} via Admin Web`,
+      message: `Add ${path} via Admin Web`,
       content: base64Content
     };
     if (sha) body.sha = sha;
@@ -412,7 +422,6 @@
 
     if (!putRes.ok) throw new Error("Upload failed");
   }
-  // -----------------------------
 
   function renderTable() {
     const table = document.getElementById("resultTable");
