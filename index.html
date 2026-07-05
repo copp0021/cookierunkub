@@ -1,385 +1,634 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบคลังสินค้าออนไลน์ (ระบบคลาวด์แยกอิสระ 100%)</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        h2 {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-        .admin-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            background: #eef2f7;
-            padding: 20px;
-            border-radius: 6px;
-            border: 2px dashed #3498db;
-            margin-bottom: 25px;
-        }
-        .admin-card {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        input[type="file"] { display: none; }
-        .btn-upload {
-            display: inline-block;
-            padding: 10px 20px;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        .btn-png { background: #2ecc71; }
-        .btn-png:hover { background: #27ae60; }
-        .btn-benz { background: #e67e22; }
-        .btn-benz:hover { background: #d35400; }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 25px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-            vertical-align: middle;
-        }
-        th { background-color: #34495e; color: white; }
-        tr { transition: all 0.2s; }
-        tr.sold-out {
-            background-color: #f2f2f2 !important;
-            color: #95a5a6;
-            text-decoration: line-through;
-        }
-        tr.sold-out .preview-img { filter: grayscale(100%); opacity: 0.6; }
-        tr.sold-out .tag-badge { background-color: #bdc3c7 !important; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดการไฟล์ .benz และรูปภาพ (Local Git Manager)</title>
 
-        .btn-status {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-sell { background-color: #2ecc71; color: white; }
-        .btn-sold { background-color: #e74c3c; color: white; }
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7f6;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
 
-        .tag-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            margin: 2px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-            text-decoration: none !important;
-        }
-        .tag-P { background-color: #e74c3c; }
-        .tag-T { background-color: #2ecc71; }
-        .tag-C { background-color: #9b59b6; }
-        .tag-code { background-color: #e67e22; }
-        .tag-sold { background-color: #7f8c8d; }
-        
-        .preview-img {
-            max-width: 80px;
-            max-height: 80px;
-            border-radius: 4px;
-            object-fit: cover;
-            border: 1px solid #ddd;
-            cursor: pointer;
-        }
-        .loading-txt { text-align: center; color: #7f8c8d; font-style: italic; padding: 20px; }
+    .container {
+      max-width: 1150px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    }
 
-        /* Modal หน้าต่างดูรูปเต็ม */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            padding-top: 50px;
-            left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.9);
-        }
-        .modal-content { margin: auto; display: block; max-width: 85%; max-height: 80vh; border-radius: 4px; }
-        .close-modal { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
-    </style>
+    h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 10px;
+      margin-top: 0;
+    }
+
+    .top-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    button, .btn-upload {
+      border: none;
+      padding: 12px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 15px;
+      color: white;
+      text-align: center;
+    }
+
+    .btn-folder { background: #2980b9; }
+    .btn-upload { background: #e67e22; display: block; }
+    .btn-reload { background: #34495e; }
+
+    button:disabled, .btn-disabled {
+      background: #b2bec3 !important;
+      cursor: not-allowed;
+    }
+
+    .git-notice {
+      background: #fff3cd;
+      color: #856404;
+      padding: 10px;
+      border-radius: 6px;
+      border-left: 4px solid #ffeeba;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+
+    .status-box {
+      background: #eef2f7;
+      padding: 12px;
+      border-radius: 6px;
+      color: #636e72;
+      margin-bottom: 16px;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr 180px;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    input[type="text"], select {
+      padding: 11px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
+    .summary {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .badge {
+      background: #eef1f5;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: #34495e;
+      color: white;
+    }
+
+    tr:hover {
+      background-color: #f7f7f7;
+    }
+
+    .preview-img {
+      width: 90px;
+      height: 90px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid #ddd;
+    }
+
+    .no-img {
+      width: 90px;
+      height: 90px;
+      border-radius: 6px;
+      background: #f1f1f1;
+      color: #e74c3c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 13px;
+      font-weight: bold;
+      border: 1px dashed #ccc;
+    }
+
+    .tag-badge {
+      display: inline-block;
+      padding: 5px 8px;
+      margin: 2px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .tag-P { background-color: #e74c3c; }
+    .tag-T { background-color: #2ecc71; }
+    .tag-C { background-color: #9b59b6; }
+    .tag-code { background-color: #e67e22; }
+
+    .display-name {
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 6px;
+    }
+
+    .file-name {
+      font-size: 12px;
+      color: #7f8c8d;
+      word-break: break-all;
+    }
+
+    .status-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .btn-status {
+      color: #333;
+      padding: 8px 10px;
+      font-size: 13px;
+      border-radius: 5px;
+      flex: 1;
+    }
+
+    .btn-available {
+      background: #ddffdf;
+      color: #006b12;
+    }
+
+    .btn-sold {
+      background: #ffdddd;
+      color: #a10000;
+    }
+
+    .active-available {
+      outline: 3px solid #00a326;
+    }
+
+    .active-sold {
+      outline: 3px solid #d00000;
+    }
+
+    .warn {
+      color: #e74c3c;
+      font-weight: bold;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    @media (max-width: 800px) {
+      .top-actions, .search-row {
+        grid-template-columns: 1fr;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        background: #fff;
+        margin-bottom: 14px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+      }
+
+      td {
+        border: none;
+        padding: 8px 0;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
 <div class="container">
-    <h2>🌐 ระบบคลังสินค้าออนไลน์ (ระบบแยกส่วนอิสระ 100%)</h2>
-    
-    <div class="admin-grid">
-        <div class="admin-card">
-            <h4 style="margin:0; color:#27ae60;">🖼️ อัปโหลดรูปภาพเข้า Firebase Storage</h4>
-            <p style="font-size: 12px; color:#7f8c8d; margin:5px 0;">เลือกโฟลเดอร์รูปภาพ .png เพื่อส่งเก็บขึ้น Cloud ทันที</p>
-            <label class="btn-upload btn-png">
-                <input type="file" id="pngFolderInput" multiple webkitdirectory directory>
-                📁 เลือกโฟลเดอร์รูป (.png)
-            </label>
-            <div id="pngStatus" style="font-size:12px; font-weight:bold; color:#27ae60; margin-top:5px;">ยังไม่มีการส่งรูปภาพ...</div>
-        </div>
+  <h2>📦 ระบบจัดการไฟล์ .benz และรูปภาพ</h2>
 
-        <div class="admin-card">
-            <h4 style="margin:0; color:#d35400;">📄 อัปโหลดข้อมูลสินค้าเข้า 100% Cloud</h4>
-            <p style="font-size: 12px; color:#7f8c8d; margin:5px 0;">เลือกกลุ่มไฟล์ข้อมูล .benz ทั้งหมดเพื่อสับแท็กสร้างรายการ</p>
-            <label class="btn-upload btn-benz">
-                <input type="file" id="benzFilesInput" multiple accept="*">
-                📄 เลือกกลุ่มไฟล์ข้อมูล (.benz)
-            </label>
-            <div id="uploadStatus" style="font-size:12px; font-weight:bold; color:#e67e22; margin-top:5px;">รอไฟล์ข้อมูลสินค้า...</div>
-        </div>
-    </div>
+  <div class="git-notice">
+    <strong>💡 สำหรับผู้ใช้ GitHub:</strong> การเพิ่มหรือแก้ไขไฟล์ผ่านระบบนี้ จะเป็นการทำงานบนโฟลเดอร์ Local ในเครื่องของคุณ อย่าลืมทำ <code>git push</code> เพื่ออัปเดตไฟล์ขึ้น GitHub ทุกครั้งหลังใช้งานเสร็จ
+  </div>
 
-    <h3 style="color:#34495e; border-left: 5px solid #2ecc71; padding-left: 10px;">📦 รายการสินค้าบนคลาวด์</h3>
-    <div id="loadingText" class="loading-txt">กำลังโหลดข้อมูลจากฐานข้อมูล...</div>
-    
-    <table id="resultTable" style="display:none;">
-        <thead>
-            <tr>
-                <th>รูปภาพ</th>
-                <th>ชื่อไฟล์เดิม (.benz)</th>
-                <th>ข้อมูลที่แยกได้ (Tags)</th>
-                <th style="width: 120px; text-align: center;">จัดการสถานะ</th>
-            </tr>
-        </thead>
-        <tbody id="resultBody">
-            </tbody>
-    </table>
+  <div class="top-actions">
+    <button class="btn-folder" onclick="selectSystemFolder()">
+      📁 1. เลือกโฟลเดอร์โปรเจกต์ (Local)
+    </button>
+
+    <button class="btn-upload" id="addProductBtn" onclick="addProductFiles()" disabled>
+      ➕ 2. เพิ่มสินค้า .benz / .png
+    </button>
+
+    <button class="btn-reload" id="reloadBtn" onclick="loadFromFolders()" disabled>
+      🔄 โหลดข้อมูลในโฟลเดอร์ใหม่
+    </button>
+  </div>
+
+  <div class="status-box" id="systemStatus">
+    ยังไม่ได้เลือกโฟลเดอร์ระบบ (กรุณาเลือกโฟลเดอร์โปรเจกต์หลักที่มี id/ และ img/)
+  </div>
+
+  <div class="search-row">
+    <input type="text" id="searchInput" placeholder="ค้นหา เช่น ขนมปัง เป๋าตัง มีด LYNCZ7544 หรือ 191">
+
+    <select id="filterStatus">
+      <option value="all">แสดงทั้งหมด</option>
+      <option value="available">ยังไม่ขาย</option>
+      <option value="sold">ขายแล้ว</option>
+    </select>
+  </div>
+
+  <div class="summary">
+    <div class="badge">ไฟล์ .benz: <span id="benzCount">0</span></div>
+    <div class="badge">รูปภาพ .png: <span id="pngCount">0</span></div>
+    <div class="badge">ยังไม่ขาย: <span id="availableCount">0</span></div>
+    <div class="badge">ขายแล้ว: <span id="soldCount">0</span></div>
+  </div>
+
+  <table id="resultTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>รูปภาพ</th>
+        <th>ข้อมูลสินค้า</th>
+        <th>Tags</th>
+        <th>สถานะ</th>
+      </tr>
+    </thead>
+    <tbody id="resultBody"></tbody>
+  </table>
 </div>
 
-<div id="imageModal" class="modal" onclick="closeImageModal()">
-    <span class="close-modal">&times;</span>
-    <img class="modal-content" id="imgFull">
-</div>
+<script>
+  let rootHandle = null;
+  let idHandle = null;
+  let imgHandle = null;
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, setDoc, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+  const pngMap = new Map();
+  let benzFiles = [];
 
-// ⚠️ วาง Firebase Config ของคุณตรงนี้
-const firebaseConfig = {
-  apiKey: "AIzaSyCfCRpOvvaCZzBQ7L4py44K1NXeRdkTcVs",
-  authDomain: "cookierunkub-system.firebaseapp.com",
-  projectId: "cookierunkub-system",
-  storageBucket: "cookierunkub-system.firebasestorage.app",
-  messagingSenderId: "176489945100",
-  appId: "1:176489945100:web:f5731e8b62ccbbaf23f629",
-  measurementId: "G-3PTLYD7KDQ"
-};
+  const systemStatus = document.getElementById("systemStatus");
+  const addProductBtn = document.getElementById("addProductBtn");
+  const reloadBtn = document.getElementById("reloadBtn");
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
+  const searchInput = document.getElementById("searchInput");
+  const filterStatus = document.getElementById("filterStatus");
 
-// === [ฝั่งที่ 1] อัปโหลดรูปภาพยิงเข้า Storage ตรงๆ ไม่สนใจอย่างอื่น ===
-document.getElementById('pngFolderInput').addEventListener('change', async function(e) {
-    const files = e.target.files;
-    if (files.length === 0) return;
+  const benzCount = document.getElementById("benzCount");
+  const pngCount = document.getElementById("pngCount");
+  const availableCount = document.getElementById("availableCount");
+  const soldCount = document.getElementById("soldCount");
 
-    const pngStatus = document.getElementById('pngStatus');
-    pngStatus.style.color = "#e67e22";
-    pngStatus.innerText = "⏳ กำลังอัปโหลดรูปภาพเข้าคลังคลาวด์ ห้ามปิดหน้านี้...";
+  searchInput.addEventListener("input", renderTable);
+  filterStatus.addEventListener("change", renderTable);
 
-    let uploadCount = 0;
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (file.name.toLowerCase().endsWith('.png')) {
-            const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')).trim().toLowerCase();
-            // บันทึกรูปเข้า Storage โดยใช้ชื่อไฟล์รูปตัวพิมพ์เล็กเป็น Key ป้องกันปัญหาพิมพ์เล็กพิมพ์ใหญ่
-            const storageRef = ref(storage, `images/${nameWithoutExt}.png`);
-            await uploadBytes(storageRef, file);
-            uploadCount++;
-        }
+  async function selectSystemFolder() {
+    if (!window.showDirectoryPicker) {
+      alert("เบราว์เซอร์นี้ไม่รองรับการบันทึกไฟล์ลงโฟลเดอร์จริง กรุณาใช้ Chrome หรือ Edge รุ่นใหม่บน Desktop");
+      return;
     }
-    pngStatus.style.color = "#27ae60";
-    pngStatus.innerText = `✅ ส่งรูปขึ้นคลังคลาวด์เสร็จสิ้น ${uploadCount} รูป!`;
-});
 
-// === [ฝั่งที่ 2] อัปโหลดไฟล์ข้อความสับแท็ก ยิงเข้า Firestore ตรงๆ ===
-document.getElementById('benzFilesInput').addEventListener('change', async function(e) {
-    const files = e.target.files;
-    if (files.length === 0) return;
+    try {
+      rootHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+      idHandle = await rootHandle.getDirectoryHandle("id", { create: true });
+      imgHandle = await rootHandle.getDirectoryHandle("img", { create: true });
 
-    const statusDiv = document.getElementById('uploadStatus');
-    statusDiv.style.color = "#e67e22";
-    statusDiv.innerText = "⏳ กำลังบันทึกข้อมูลสินค้าขึ้นฐานข้อมูลออนไลน์...";
+      addProductBtn.disabled = false;
+      reloadBtn.disabled = false;
 
-    let successCount = 0;
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const originalName = file.name;
-        
-        if (!originalName.toLowerCase().includes('.benz')) continue;
+      systemStatus.innerHTML = `
+        ✅ เชื่อมต่อโฟลเดอร์โปรเจกต์สำเร็จ<br>
+        📄 ไฟล์ .benz จะถูกบันทึกใน <b>id/</b><br>
+        🖼️ ไฟล์ .png จะถูกบันทึกใน <b>img/</b>
+      `;
 
-        let nameWithoutExt = originalName;
-        if (originalName.toLowerCase().endsWith('.benz')) {
-            nameWithoutExt = originalName.substring(0, originalName.lastIndexOf('.')).trim();
-        }
+      await loadFromFolders();
 
-        // แกะหารหัสตรงกลางเพื่อนำไปใช้ดึงรูปในตารางแสดงผลภายหลัง
-        const parts = nameWithoutExt.split('_');
-        let imageCode = "";
-        parts.forEach(part => {
-            const prefix = part.charAt(0);
-            if (prefix !== 'P' && prefix !== 'T' && prefix !== 'C' && part.length > 2) {
-                imageCode = part.trim().toLowerCase(); // บันทึกเป็นพิมพ์เล็ก
+    } catch (error) {
+      console.error(error);
+      systemStatus.textContent = "ยกเลิกการเลือกโฟลเดอร์ หรือไม่ได้รับสิทธิ์เข้าถึง";
+    }
+  }
+
+  async function addProductFiles() {
+    if (!rootHandle || !idHandle || !imgHandle) {
+      alert("กรุณาเลือกโฟลเดอร์โปรเจกต์ก่อน");
+      return;
+    }
+
+    try {
+      const fileHandles = await window.showOpenFilePicker({
+        multiple: true,
+        types: [
+          {
+            description: "ไฟล์สินค้า",
+            accept: {
+              "image/png": [".png"],
+              "application/octet-stream": [".benz"]
             }
-        });
+          }
+        ],
+        excludeAcceptAllOption: false
+      });
 
-        // ส่งขึ้นคลาวด์เฉพาะข้อความ
-        await setDoc(doc(db, "products", originalName), {
-            fullName: originalName,
-            nameWithoutExt: nameWithoutExt,
-            imageCode: imageCode, // เก็บตัวรหัสเอาไว้แมตช์หน้าบ้านแทน URL ตรงๆ
-            isSold: false,
-            timestamp: Date.now()
-        });
-        successCount++;
+      let benzAdded = 0;
+      let pngAdded = 0;
+
+      for (const fileHandle of fileHandles) {
+        const file = await fileHandle.getFile();
+        const ext = getExtension(file.name);
+
+        if (ext === "benz") {
+          await saveFileToFolder(idHandle, file.name, file);
+          benzAdded++;
+        }
+
+        if (ext === "png") {
+          await saveFileToFolder(imgHandle, file.name, file);
+          pngAdded++;
+        }
+      }
+
+      systemStatus.innerHTML = `
+        ✅ เพิ่มสินค้าลงโฟลเดอร์ Local เรียบร้อย<br>
+        📄 เพิ่ม .benz: <b>${benzAdded}</b> ไฟล์<br>
+        🖼️ เพิ่ม .png: <b>${pngAdded}</b> ไฟล์<br>
+        <span style="color:#e74c3c; font-size: 12px;">*อย่าลืม git commit & push เพื่ออัปเดตขึ้น GitHub</span>
+      `;
+
+      await loadFromFolders();
+
+    } catch (error) {
+      console.error(error);
+      systemStatus.textContent = "ยกเลิกการเพิ่มสินค้า";
+    }
+  }
+
+  async function saveFileToFolder(folderHandle, fileName, file) {
+    const newFileHandle = await folderHandle.getFileHandle(fileName, { create: true });
+    const writable = await newFileHandle.createWritable();
+    await writable.write(file);
+    await writable.close();
+  }
+
+  async function loadFromFolders() {
+    if (!idHandle || !imgHandle) return;
+
+    pngMap.clear();
+    benzFiles = [];
+
+    for await (const [name, handle] of imgHandle.entries()) {
+      if (handle.kind !== "file") continue;
+      if (getExtension(name) !== "png") continue;
+
+      const file = await handle.getFile();
+      const code = getBaseName(file.name);
+
+      pngMap.set(code, {
+        fileName: file.name,
+        url: URL.createObjectURL(file)
+      });
     }
 
-    statusDiv.style.color = "#27ae60";
-    statusDiv.innerText = `🎉 บันทึกสินค้าออนไลน์เรียบร้อยแล้ว ${successCount} รายการ!`;
-});
+    for await (const [name, handle] of idHandle.entries()) {
+      if (handle.kind !== "file") continue;
+      if (getExtension(name) !== "benz") continue;
 
-// === [ส่วนการแสดงผล] ดึงข้อมูลสินค้า และ ดึงลิงก์รูปคู่ขนานมาแสดงผลอัตโนมัติ ===
-onSnapshot(collection(db, "products"), (snapshot) => {
-    const table = document.getElementById('resultTable');
-    const tbody = document.getElementById('resultBody');
-    const loadingText = document.getElementById('loadingText');
-    
-    tbody.innerHTML = '';
-    if (snapshot.empty) {
-        loadingText.innerText = "ยังไม่มีข้อมูลสินค้าออนไลน์ในคลัง กรุณาเลือกไฟล์ฝั่งขวาเพื่อบันทึกข้อมูลก่อนครับ";
-        table.style.display = 'none';
-        return;
+      const file = await handle.getFile();
+      const nameWithoutExt = getBaseName(file.name);
+      const parsed = parseBenzFileName(nameWithoutExt);
+
+      benzFiles.push({
+        fullName: file.name,
+        nameWithoutExt: nameWithoutExt,
+        imageCode: parsed.imageCode,
+        displayName: parsed.displayName,
+        tags: parsed.tags,
+        status: localStorage.getItem("status_" + nameWithoutExt) || "available"
+      });
     }
 
-    loadingText.style.display = 'none';
-    table.style.display = 'table';
+    benzFiles.sort((a, b) => a.displayName.localeCompare(b.displayName, "th"));
+    renderTable();
+  }
 
-    snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const tr = document.createElement('tr');
-        if (data.isSold) tr.className = 'sold-out';
+  function renderTable() {
+    const table = document.getElementById("resultTable");
+    const tbody = document.getElementById("resultBody");
 
-        // ช่องที่ 1: วิ่งไปทักทายตรวจสอบลิ้งค์รูปภาพจาก Storage แบบ Real-time ตามรหัส
-        const imgCell = document.createElement('td');
-        imgCell.innerHTML = '<span style="color:#7f8c8d; font-size:12px;">⏳ กำลังหาภาพ...</span>';
+    tbody.innerHTML = "";
 
-        if (data.imageCode) {
-            // ค้นหารูปจากโฟลเดอร์ images ใน Storage ด้วยรหัสรูปภาพ
-            const imgRef = ref(storage, `images/${data.imageCode}.png`);
-            getDownloadURL(imgRef)
-                .then((url) => {
-                    // หากเจอรูปบนคลาวด์ ให้เขียนทับแทนข้อความกำลังหาภาพทันที
-                    imgCell.innerHTML = '';
-                    const img = document.createElement('img');
-                    img.src = url;
-                    img.className = 'preview-img';
-                    img.onclick = function() { openImageModal(url); };
-                    imgCell.appendChild(img);
-                })
-                .catch((error) => {
-                    // หากยังไม่ได้อัปโหลดรูปภาพนี้ขึ้น Storage ระบบจะแสดงแท็กแจ้งเตือนนุ่มนวลแทน
-                    imgCell.innerHTML = '<span style="color:#e67e22; font-size:12px; font-weight:bold; background:#fff5e6; padding:4px 8px; border-radius:4px; border:1px solid #ffe0b2;">⚠️ รูปภาพไม่มีในคลัง</span>';
-                });
-        } else {
-            imgCell.innerHTML = '<span style="color:#7f8c8d; font-size:12px; font-style:italic;">ไม่พบรหัสภาพ</span>';
-        }
-        tr.appendChild(imgCell);
+    if (benzFiles.length === 0) {
+      table.style.display = "none";
+      updateSummary();
+      return;
+    }
 
-        const nameCell = document.createElement('td');
-        nameCell.textContent = data.fullName;
-        tr.appendChild(nameCell);
+    table.style.display = "table";
 
-        const tagsCell = document.createElement('td');
-        if (data.isSold) {
-            const soldBadge = document.createElement('span');
-            soldBadge.className = 'tag-badge tag-sold';
-            soldBadge.textContent = '✖ ขายแล้ว';
-            tagsCell.appendChild(soldBadge);
-        }
+    const search = searchInput.value.toLowerCase().trim();
+    const filter = filterStatus.value;
 
-        const parts = data.nameWithoutExt.split('_');
-        parts.forEach(part => {
-            if (!part) return;
-            const span = document.createElement('span');
-            span.className = 'tag-badge ';
-            
-            const prefix = part.charAt(0);
-            if (prefix === 'P') {
-                span.className += 'tag-P';
-                span.textContent = `สินค้า: ${part.substring(1)}`;
-            } else if (prefix === 'T') {
-                span.className += 'tag-T';
-                span.textContent = `ประเภท: ${part.substring(1)}`;
-            } else if (prefix === 'C') {
-                span.className += 'tag-C';
-                span.textContent = `โค้ด: ${part.substring(1)}`;
-            } else {
-                span.className += 'tag-code';
-                span.textContent = `รหัสรูป: ${part}`;
-            }
-            tagsCell.appendChild(span);
-        });
-        tr.appendChild(tagsCell);
+    const filtered = benzFiles.filter(item => {
+      const searchText = (
+        item.fullName + " " +
+        item.displayName + " " +
+        item.imageCode + " " +
+        item.tags.map(t => t.text).join(" ")
+      ).toLowerCase();
 
-        const actionCell = document.createElement('td');
-        actionCell.style.textAlign = 'center';
-        const statusBtn = document.createElement('button');
-        
-        if (data.isSold) {
-            statusBtn.className = 'btn-status btn-sold';
-            statusBtn.textContent = '↩️ คืนสต็อก';
-        } else {
-            statusBtn.className = 'btn-status btn-sell';
-            statusBtn.textContent = '💰 ขายแล้ว';
-        }
-        
-        statusBtn.onclick = async function() {
-            const docRef = doc(db, "products", data.fullName);
-            await updateDoc(docRef, { isSold: !data.isSold });
-        };
-        actionCell.appendChild(statusBtn);
-        tr.appendChild(actionCell);
+      const matchSearch = searchText.includes(search);
+      const matchStatus = filter === "all" || item.status === filter;
 
-        tbody.appendChild(tr);
+      return matchSearch && matchStatus;
     });
-});
 
-window.openImageModal = function(src) {
-    document.getElementById('imageModal').style.display = "block";
-    document.getElementById('imgFull').src = src;
-}
-window.closeImageModal = function() {
-    document.getElementById('imageModal').style.display = "none";
-}
+    filtered.forEach(item => {
+      const tr = document.createElement("tr");
+
+      const imgCell = document.createElement("td");
+      if (item.imageCode && pngMap.has(item.imageCode)) {
+        const img = document.createElement("img");
+        img.src = pngMap.get(item.imageCode).url;
+        img.className = "preview-img";
+        img.alt = item.imageCode;
+        imgCell.appendChild(img);
+      } else {
+        const noImg = document.createElement("div");
+        noImg.className = "no-img";
+        noImg.innerHTML = "ไม่มีภาพ";
+        imgCell.appendChild(noImg);
+
+        const warn = document.createElement("div");
+        warn.className = "warn";
+        warn.textContent = item.imageCode
+          ? "ต้องมีไฟล์ img/" + item.imageCode + ".png"
+          : "ไม่พบรหัสรูปในชื่อไฟล์ .benz";
+        imgCell.appendChild(warn);
+      }
+      tr.appendChild(imgCell);
+
+      const infoCell = document.createElement("td");
+      infoCell.innerHTML = `
+        <div class="display-name">${escapeHtml(item.displayName)}</div>
+        <div class="file-name">ไฟล์ .benz: ${escapeHtml(item.fullName)}</div>
+        <div class="file-name">รหัสรูป: ${escapeHtml(item.imageCode || "-")}</div>
+      `;
+      tr.appendChild(infoCell);
+
+      const tagsCell = document.createElement("td");
+      item.tags.forEach(tag => {
+        const span = document.createElement("span");
+        span.className = "tag-badge " + tag.className;
+        span.textContent = tag.text;
+        tagsCell.appendChild(span);
+      });
+      tr.appendChild(tagsCell);
+
+      const statusCell = document.createElement("td");
+      statusCell.innerHTML = `
+        <b>${item.status === "sold" ? "ขายแล้ว" : "ยังไม่ขาย"}</b>
+        <div class="status-buttons">
+          <button class="btn-status btn-available ${item.status === "available" ? "active-available" : ""}">
+            ยังไม่ขาย
+          </button>
+          <button class="btn-status btn-sold ${item.status === "sold" ? "active-sold" : ""}">
+            ขายแล้ว
+          </button>
+        </div>
+      `;
+
+      const btnAvailable = statusCell.querySelector(".btn-available");
+      const btnSold = statusCell.querySelector(".btn-sold");
+
+      btnAvailable.addEventListener("click", () => setStatus(item.nameWithoutExt, "available"));
+      btnSold.addEventListener("click", () => setStatus(item.nameWithoutExt, "sold"));
+
+      tr.appendChild(statusCell);
+      tbody.appendChild(tr);
+    });
+
+    updateSummary();
+  }
+
+  function setStatus(id, status) {
+    const item = benzFiles.find(x => x.nameWithoutExt === id);
+    if (!item) return;
+    item.status = status;
+    localStorage.setItem("status_" + id, status);
+    renderTable();
+  }
+
+  function updateSummary() {
+    benzCount.textContent = benzFiles.length;
+    pngCount.textContent = pngMap.size;
+    availableCount.textContent = benzFiles.filter(x => x.status === "available").length;
+    soldCount.textContent = benzFiles.filter(x => x.status === "sold").length;
+  }
+
+  function parseBenzFileName(nameWithoutExt) {
+    const parts = nameWithoutExt.split("_");
+    const displayParts = [];
+    const tags = [];
+    let imageCode = "";
+
+    parts.forEach(part => {
+      if (!part) return;
+      const prefix = part.charAt(0);
+      const value = part.substring(1).trim();
+
+      if (prefix === "P" && value) {
+        addUnique(displayParts, value);
+        tags.push({ className: "tag-P", text: "สินค้า: " + value });
+        return;
+      }
+
+      if (prefix === "T" && value) {
+        addUnique(displayParts, value);
+        tags.push({ className: "tag-T", text: "ประเภท: " + value });
+        return;
+      }
+
+      if (prefix === "C" && value) {
+        const diamondText = "C = เพชร " + value;
+        addUnique(displayParts, diamondText);
+        tags.push({ className: "tag-C", text: "เพชร: " + value });
+        return;
+      }
+
+      imageCode = part.trim();
+      tags.push({ className: "tag-code", text: "รหัสรูป: " + part.trim() });
+    });
+
+    return {
+      imageCode: imageCode,
+      displayName: displayParts.length > 0 ? displayParts.join(" + ") : nameWithoutExt,
+      tags: tags
+    };
+  }
+
+  function addUnique(array, value) {
+    if (!array.includes(value)) array.push(value);
+  }
+
+  function getExtension(filename) {
+    return filename.split(".").pop().toLowerCase();
+  }
+
+  function getBaseName(filename) {
+    return filename.replace(/\.[^/.]+$/, "");
+  }
+
+  function escapeHtml(text) {
+    return String(text)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 </script>
+
 </body>
 </html>
