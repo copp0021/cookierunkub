@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบจัดการไฟล์ .benz และรูปภาพ (Local Git Manager)</title>
+  <title>ระบบแสดงสินค้า .benz จาก GitHub</title>
 
   <style>
     body {
@@ -30,49 +30,46 @@
       margin-top: 0;
     }
 
-    .top-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
+    .config-box {
+      background: #eef2f7;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #3498db;
     }
 
-    button, .btn-upload {
+    .config-box input {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-right: 10px;
+    }
+
+    button {
       border: none;
-      padding: 12px 16px;
+      padding: 10px 16px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
       font-size: 15px;
       color: white;
-      text-align: center;
+      background: #34495e;
+      transition: 0.3s;
     }
 
-    .btn-folder { background: #2980b9; }
-    .btn-upload { background: #e67e22; display: block; }
-    .btn-reload { background: #34495e; }
+    button:hover {
+      background: #2c3e50;
+    }
 
-    button:disabled, .btn-disabled {
-      background: #b2bec3 !important;
+    button:disabled {
+      background: #b2bec3;
       cursor: not-allowed;
     }
 
-    .git-notice {
-      background: #fff3cd;
-      color: #856404;
-      padding: 10px;
-      border-radius: 6px;
-      border-left: 4px solid #ffeeba;
-      margin-bottom: 15px;
+    .status-msg {
+      margin-top: 10px;
       font-size: 14px;
-    }
-
-    .status-box {
-      background: #eef2f7;
-      padding: 12px;
-      border-radius: 6px;
-      color: #636e72;
-      margin-bottom: 16px;
+      font-weight: bold;
     }
 
     .search-row {
@@ -189,23 +186,10 @@
       flex: 1;
     }
 
-    .btn-available {
-      background: #ddffdf;
-      color: #006b12;
-    }
-
-    .btn-sold {
-      background: #ffdddd;
-      color: #a10000;
-    }
-
-    .active-available {
-      outline: 3px solid #00a326;
-    }
-
-    .active-sold {
-      outline: 3px solid #d00000;
-    }
+    .btn-available { background: #ddffdf; color: #006b12; }
+    .btn-sold { background: #ffdddd; color: #a10000; }
+    .active-available { outline: 3px solid #00a326; }
+    .active-sold { outline: 3px solid #d00000; }
 
     .warn {
       color: #e74c3c;
@@ -215,30 +199,14 @@
     }
 
     @media (max-width: 800px) {
-      .top-actions, .search-row {
-        grid-template-columns: 1fr;
-      }
-
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
-
-      thead {
-        display: none;
-      }
-
+      .search-row { grid-template-columns: 1fr; }
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
       tr {
-        background: #fff;
-        margin-bottom: 14px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 10px;
+        background: #fff; margin-bottom: 14px;
+        border: 1px solid #ddd; border-radius: 8px; padding: 10px;
       }
-
-      td {
-        border: none;
-        padding: 8px 0;
-      }
+      td { border: none; padding: 8px 0; }
     }
   </style>
 </head>
@@ -246,33 +214,18 @@
 <body>
 
 <div class="container">
-  <h2>📦 ระบบจัดการไฟล์ .benz และรูปภาพ</h2>
+  <h2>📦 ระบบแสดงสินค้าจาก GitHub</h2>
 
-  <div class="git-notice">
-    <strong>💡 สำหรับผู้ใช้ GitHub:</strong> การเพิ่มหรือแก้ไขไฟล์ผ่านระบบนี้ จะเป็นการทำงานบนโฟลเดอร์ Local ในเครื่องของคุณ อย่าลืมทำ <code>git push</code> เพื่ออัปเดตไฟล์ขึ้น GitHub ทุกครั้งหลังใช้งานเสร็จ
-  </div>
-
-  <div class="top-actions">
-    <button class="btn-folder" onclick="selectSystemFolder()">
-      📁 1. เลือกโฟลเดอร์โปรเจกต์ (Local)
-    </button>
-
-    <button class="btn-upload" id="addProductBtn" onclick="addProductFiles()" disabled>
-      ➕ 2. เพิ่มสินค้า .benz / .png
-    </button>
-
-    <button class="btn-reload" id="reloadBtn" onclick="loadFromFolders()" disabled>
-      🔄 โหลดข้อมูลในโฟลเดอร์ใหม่
-    </button>
-  </div>
-
-  <div class="status-box" id="systemStatus">
-    ยังไม่ได้เลือกโฟลเดอร์ระบบ (กรุณาเลือกโฟลเดอร์โปรเจกต์หลักที่มี id/ และ img/)
+  <div class="config-box">
+    <strong>การเชื่อมต่อ GitHub:</strong><br><br>
+    <label>Username: <input type="text" id="ghOwner" value="YOUR_USERNAME_HERE"></label>
+    <label>Repository: <input type="text" id="ghRepo" value="YOUR_REPO_NAME_HERE"></label>
+    <button id="loadGitBtn" onclick="loadFromGitHub()">🔄 ดึงข้อมูลจาก GitHub</button>
+    <div id="statusMsg" class="status-msg">พร้อมทำงาน...</div>
   </div>
 
   <div class="search-row">
     <input type="text" id="searchInput" placeholder="ค้นหา เช่น ขนมปัง เป๋าตัง มีด LYNCZ7544 หรือ 191">
-
     <select id="filterStatus">
       <option value="all">แสดงทั้งหมด</option>
       <option value="available">ยังไม่ขาย</option>
@@ -293,7 +246,7 @@
         <th>รูปภาพ</th>
         <th>ข้อมูลสินค้า</th>
         <th>Tags</th>
-        <th>สถานะ</th>
+        <th>สถานะ (เซฟในเครื่อง)</th>
       </tr>
     </thead>
     <tbody id="resultBody"></tbody>
@@ -301,156 +254,83 @@
 </div>
 
 <script>
-  let rootHandle = null;
-  let idHandle = null;
-  let imgHandle = null;
-
   const pngMap = new Map();
   let benzFiles = [];
 
-  const systemStatus = document.getElementById("systemStatus");
-  const addProductBtn = document.getElementById("addProductBtn");
-  const reloadBtn = document.getElementById("reloadBtn");
-
   const searchInput = document.getElementById("searchInput");
   const filterStatus = document.getElementById("filterStatus");
-
-  const benzCount = document.getElementById("benzCount");
-  const pngCount = document.getElementById("pngCount");
-  const availableCount = document.getElementById("availableCount");
-  const soldCount = document.getElementById("soldCount");
+  const statusMsg = document.getElementById("statusMsg");
+  const loadGitBtn = document.getElementById("loadGitBtn");
 
   searchInput.addEventListener("input", renderTable);
   filterStatus.addEventListener("change", renderTable);
 
-  async function selectSystemFolder() {
-    if (!window.showDirectoryPicker) {
-      alert("เบราว์เซอร์นี้ไม่รองรับการบันทึกไฟล์ลงโฟลเดอร์จริง กรุณาใช้ Chrome หรือ Edge รุ่นใหม่บน Desktop");
+  async function loadFromGitHub() {
+    const owner = document.getElementById("ghOwner").value.trim();
+    const repo = document.getElementById("ghRepo").value.trim();
+
+    if (!owner || !repo) {
+      alert("กรุณากรอก Username และ Repository ให้ครบถ้วน");
       return;
     }
 
-    try {
-      rootHandle = await window.showDirectoryPicker({ mode: "readwrite" });
-      idHandle = await rootHandle.getDirectoryHandle("id", { create: true });
-      imgHandle = await rootHandle.getDirectoryHandle("img", { create: true });
-
-      addProductBtn.disabled = false;
-      reloadBtn.disabled = false;
-
-      systemStatus.innerHTML = `
-        ✅ เชื่อมต่อโฟลเดอร์โปรเจกต์สำเร็จ<br>
-        📄 ไฟล์ .benz จะถูกบันทึกใน <b>id/</b><br>
-        🖼️ ไฟล์ .png จะถูกบันทึกใน <b>img/</b>
-      `;
-
-      await loadFromFolders();
-
-    } catch (error) {
-      console.error(error);
-      systemStatus.textContent = "ยกเลิกการเลือกโฟลเดอร์ หรือไม่ได้รับสิทธิ์เข้าถึง";
-    }
-  }
-
-  async function addProductFiles() {
-    if (!rootHandle || !idHandle || !imgHandle) {
-      alert("กรุณาเลือกโฟลเดอร์โปรเจกต์ก่อน");
-      return;
-    }
-
-    try {
-      const fileHandles = await window.showOpenFilePicker({
-        multiple: true,
-        types: [
-          {
-            description: "ไฟล์สินค้า",
-            accept: {
-              "image/png": [".png"],
-              "application/octet-stream": [".benz"]
-            }
-          }
-        ],
-        excludeAcceptAllOption: false
-      });
-
-      let benzAdded = 0;
-      let pngAdded = 0;
-
-      for (const fileHandle of fileHandles) {
-        const file = await fileHandle.getFile();
-        const ext = getExtension(file.name);
-
-        if (ext === "benz") {
-          await saveFileToFolder(idHandle, file.name, file);
-          benzAdded++;
-        }
-
-        if (ext === "png") {
-          await saveFileToFolder(imgHandle, file.name, file);
-          pngAdded++;
-        }
-      }
-
-      systemStatus.innerHTML = `
-        ✅ เพิ่มสินค้าลงโฟลเดอร์ Local เรียบร้อย<br>
-        📄 เพิ่ม .benz: <b>${benzAdded}</b> ไฟล์<br>
-        🖼️ เพิ่ม .png: <b>${pngAdded}</b> ไฟล์<br>
-        <span style="color:#e74c3c; font-size: 12px;">*อย่าลืม git commit & push เพื่ออัปเดตขึ้น GitHub</span>
-      `;
-
-      await loadFromFolders();
-
-    } catch (error) {
-      console.error(error);
-      systemStatus.textContent = "ยกเลิกการเพิ่มสินค้า";
-    }
-  }
-
-  async function saveFileToFolder(folderHandle, fileName, file) {
-    const newFileHandle = await folderHandle.getFileHandle(fileName, { create: true });
-    const writable = await newFileHandle.createWritable();
-    await writable.write(file);
-    await writable.close();
-  }
-
-  async function loadFromFolders() {
-    if (!idHandle || !imgHandle) return;
-
+    loadGitBtn.disabled = true;
+    statusMsg.innerHTML = "กำลังดึงข้อมูลจาก GitHub...";
+    statusMsg.style.color = "#e67e22";
+    
     pngMap.clear();
     benzFiles = [];
 
-    for await (const [name, handle] of imgHandle.entries()) {
-      if (handle.kind !== "file") continue;
-      if (getExtension(name) !== "png") continue;
+    try {
+      // 1. ดึงรายการไฟล์จากโฟลเดอร์ img/
+      const imgRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/img`);
+      if (imgRes.ok) {
+        const imgList = await imgRes.json();
+        imgList.forEach(file => {
+          if (file.type === "file" && getExtension(file.name) === "png") {
+            const code = getBaseName(file.name);
+            pngMap.set(code, {
+              fileName: file.name,
+              url: file.download_url // URL สำหรับแสดงภาพตรงๆ จาก GitHub
+            });
+          }
+        });
+      }
 
-      const file = await handle.getFile();
-      const code = getBaseName(file.name);
+      // 2. ดึงรายการไฟล์จากโฟลเดอร์ id/
+      const idRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/id`);
+      if (idRes.ok) {
+        const idList = await idRes.json();
+        idList.forEach(file => {
+          if (file.type === "file" && getExtension(file.name) === "benz") {
+            const nameWithoutExt = getBaseName(file.name);
+            const parsed = parseBenzFileName(nameWithoutExt);
 
-      pngMap.set(code, {
-        fileName: file.name,
-        url: URL.createObjectURL(file)
-      });
+            benzFiles.push({
+              fullName: file.name,
+              nameWithoutExt: nameWithoutExt,
+              imageCode: parsed.imageCode,
+              displayName: parsed.displayName,
+              tags: parsed.tags,
+              status: localStorage.getItem("status_" + nameWithoutExt) || "available"
+            });
+          }
+        });
+      }
+
+      benzFiles.sort((a, b) => a.displayName.localeCompare(b.displayName, "th"));
+      
+      statusMsg.innerHTML = "✅ ดึงข้อมูลสำเร็จ!";
+      statusMsg.style.color = "#2ecc71";
+      renderTable();
+
+    } catch (error) {
+      console.error(error);
+      statusMsg.innerHTML = "❌ เกิดข้อผิดพลาดในการดึงข้อมูล (ตรวจสอบชื่อ Repo หรือโฟลเดอร์)";
+      statusMsg.style.color = "#e74c3c";
+    } finally {
+      loadGitBtn.disabled = false;
     }
-
-    for await (const [name, handle] of idHandle.entries()) {
-      if (handle.kind !== "file") continue;
-      if (getExtension(name) !== "benz") continue;
-
-      const file = await handle.getFile();
-      const nameWithoutExt = getBaseName(file.name);
-      const parsed = parseBenzFileName(nameWithoutExt);
-
-      benzFiles.push({
-        fullName: file.name,
-        nameWithoutExt: nameWithoutExt,
-        imageCode: parsed.imageCode,
-        displayName: parsed.displayName,
-        tags: parsed.tags,
-        status: localStorage.getItem("status_" + nameWithoutExt) || "available"
-      });
-    }
-
-    benzFiles.sort((a, b) => a.displayName.localeCompare(b.displayName, "th"));
-    renderTable();
   }
 
   function renderTable() {
@@ -466,57 +346,50 @@
     }
 
     table.style.display = "table";
-
     const search = searchInput.value.toLowerCase().trim();
     const filter = filterStatus.value;
 
     const filtered = benzFiles.filter(item => {
-      const searchText = (
-        item.fullName + " " +
-        item.displayName + " " +
-        item.imageCode + " " +
-        item.tags.map(t => t.text).join(" ")
-      ).toLowerCase();
-
+      const searchText = (item.fullName + " " + item.displayName + " " + item.imageCode + " " + item.tags.map(t => t.text).join(" ")).toLowerCase();
       const matchSearch = searchText.includes(search);
       const matchStatus = filter === "all" || item.status === filter;
-
       return matchSearch && matchStatus;
     });
 
     filtered.forEach(item => {
       const tr = document.createElement("tr");
 
+      // Column 1: Image
       const imgCell = document.createElement("td");
       if (item.imageCode && pngMap.has(item.imageCode)) {
         const img = document.createElement("img");
         img.src = pngMap.get(item.imageCode).url;
         img.className = "preview-img";
-        img.alt = item.imageCode;
+        img.loading = "lazy";
         imgCell.appendChild(img);
       } else {
         const noImg = document.createElement("div");
         noImg.className = "no-img";
         noImg.innerHTML = "ไม่มีภาพ";
         imgCell.appendChild(noImg);
-
+        
         const warn = document.createElement("div");
         warn.className = "warn";
-        warn.textContent = item.imageCode
-          ? "ต้องมีไฟล์ img/" + item.imageCode + ".png"
-          : "ไม่พบรหัสรูปในชื่อไฟล์ .benz";
+        warn.textContent = item.imageCode ? `ขาด img/${item.imageCode}.png` : "ไม่พบรหัสรูป";
         imgCell.appendChild(warn);
       }
       tr.appendChild(imgCell);
 
+      // Column 2: Info
       const infoCell = document.createElement("td");
       infoCell.innerHTML = `
         <div class="display-name">${escapeHtml(item.displayName)}</div>
-        <div class="file-name">ไฟล์ .benz: ${escapeHtml(item.fullName)}</div>
+        <div class="file-name">ไฟล์: ${escapeHtml(item.fullName)}</div>
         <div class="file-name">รหัสรูป: ${escapeHtml(item.imageCode || "-")}</div>
       `;
       tr.appendChild(infoCell);
 
+      // Column 3: Tags
       const tagsCell = document.createElement("td");
       item.tags.forEach(tag => {
         const span = document.createElement("span");
@@ -526,19 +399,16 @@
       });
       tr.appendChild(tagsCell);
 
+      // Column 4: Status (Local Storage)
       const statusCell = document.createElement("td");
       statusCell.innerHTML = `
         <b>${item.status === "sold" ? "ขายแล้ว" : "ยังไม่ขาย"}</b>
         <div class="status-buttons">
-          <button class="btn-status btn-available ${item.status === "available" ? "active-available" : ""}">
-            ยังไม่ขาย
-          </button>
-          <button class="btn-status btn-sold ${item.status === "sold" ? "active-sold" : ""}">
-            ขายแล้ว
-          </button>
+          <button class="btn-status btn-available ${item.status === "available" ? "active-available" : ""}">ยังไม่ขาย</button>
+          <button class="btn-status btn-sold ${item.status === "sold" ? "active-sold" : ""}">ขายแล้ว</button>
         </div>
       `;
-
+      
       const btnAvailable = statusCell.querySelector(".btn-available");
       const btnSold = statusCell.querySelector(".btn-sold");
 
@@ -561,10 +431,10 @@
   }
 
   function updateSummary() {
-    benzCount.textContent = benzFiles.length;
-    pngCount.textContent = pngMap.size;
-    availableCount.textContent = benzFiles.filter(x => x.status === "available").length;
-    soldCount.textContent = benzFiles.filter(x => x.status === "sold").length;
+    document.getElementById("benzCount").textContent = benzFiles.length;
+    document.getElementById("pngCount").textContent = pngMap.size;
+    document.getElementById("availableCount").textContent = benzFiles.filter(x => x.status === "available").length;
+    document.getElementById("soldCount").textContent = benzFiles.filter(x => x.status === "sold").length;
   }
 
   function parseBenzFileName(nameWithoutExt) {
@@ -583,20 +453,16 @@
         tags.push({ className: "tag-P", text: "สินค้า: " + value });
         return;
       }
-
       if (prefix === "T" && value) {
         addUnique(displayParts, value);
         tags.push({ className: "tag-T", text: "ประเภท: " + value });
         return;
       }
-
       if (prefix === "C" && value) {
-        const diamondText = "C = เพชร " + value;
-        addUnique(displayParts, diamondText);
+        addUnique(displayParts, "C = เพชร " + value);
         tags.push({ className: "tag-C", text: "เพชร: " + value });
         return;
       }
-
       imageCode = part.trim();
       tags.push({ className: "tag-code", text: "รหัสรูป: " + part.trim() });
     });
@@ -611,22 +477,19 @@
   function addUnique(array, value) {
     if (!array.includes(value)) array.push(value);
   }
-
-  function getExtension(filename) {
-    return filename.split(".").pop().toLowerCase();
-  }
-
-  function getBaseName(filename) {
-    return filename.replace(/\.[^/.]+$/, "");
-  }
-
+  function getExtension(filename) { return filename.split(".").pop().toLowerCase(); }
+  function getBaseName(filename) { return filename.replace(/\.[^/.]+$/, ""); }
   function escapeHtml(text) {
-    return String(text)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+    return String(text).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  }
+  
+  // โหลดข้อมูลอัตโนมัติหากมีการตั้งค่าไว้แล้ว
+  window.onload = () => {
+    const owner = document.getElementById("ghOwner").value;
+    const repo = document.getElementById("ghRepo").value;
+    if (owner !== "YOUR_USERNAME_HERE" && repo !== "YOUR_REPO_NAME_HERE") {
+      loadFromGitHub();
+    }
   }
 </script>
 
